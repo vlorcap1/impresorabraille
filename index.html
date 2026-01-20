@@ -269,11 +269,11 @@
                     </div>
                     <div class="setting-item">
                         <label>Offset inicial X (mm)</label>
-                        <input type="number" id="offsetX" value="10" step="1" min="5">
+                        <input type="number" id="offsetX" value="20" step="1" min="10" max="50">
                     </div>
                     <div class="setting-item">
                         <label>Offset inicial Y (mm)</label>
-                        <input type="number" id="offsetY" value="10" step="1" min="5">
+                        <input type="number" id="offsetY" value="20" step="1" min="10" max="50">
                     </div>
                     <div class="setting-item">
                         <label>Potencia solenoide (0-255)</label>
@@ -325,26 +325,36 @@
             
             <!-- Información adicional -->
             <div class="info-box">
-                <h3>🔧 Configuración para FlashForge (Adventurer/Finder)</h3>
+                <h3>🔧 FlashForge Finder (Roja) - Configuración</h3>
+                <p><strong>📐 Especificaciones:</strong> Cama 140x140x140mm | Área útil: ~100x100mm</p>
                 <p><strong>⚠️ IMPORTANTE - Conexión del solenoide:</strong></p>
                 <p>• <strong>Opción 1 (Recomendada):</strong> Conéctalo al puerto del <strong>ventilador de capa</strong> en la placa controladora (generalmente etiquetado como "FAN" o "COOLING FAN").</p>
                 <p>• <strong>Opción 2:</strong> Si tienes acceso, usa el puerto del <strong>calefactor del extrusor</strong> (modifica M106/M107 por M104/M109 en el código).</p>
-                <p><strong>Cableado:</strong> Abre la FlashForge, localiza la placa. Conecta: Solenoide + → FAN +12V, Solenoide - → GND</p>
+                <p><strong>Cableado:</strong> Abre la Finder por atrás, localiza la placa. Conecta: Solenoide + → FAN +12V, Solenoide - → GND</p>
                 <p><strong>⚙️ Calibración:</strong></p>
-                <p>1. Coloca cartulina 200g sobre la cama (NO uses vidrio, usa la superficie de impresión directa)</p>
+                <p>1. Coloca cartulina 200g sobre la cama (NO uses vidrio, usa la superficie directa)</p>
                 <p>2. Escribe solo "a" para prueba inicial</p>
                 <p>3. Ajusta "Altura Z punzar" desde 0.5mm hasta que la aguja marque sin perforar</p>
-                <p>4. FlashForge tiene cama de ~140x140mm, deja márgenes de 10-15mm</p>
-                <p><strong>📄 Cargar G-code:</strong> Guarda el archivo en USB, insértalo en la FlashForge y selecciona el archivo desde la pantalla táctil.</p>
+                <p>4. Márgenes configurados en 20mm (área segura de ~100x100mm)</p>
+                <p><strong>📄 Cargar G-code:</strong> Guarda en USB (.gcode), insértalo en la Finder y selecciona desde pantalla táctil.</p>
+            </div>
+
+            <div class="info-box" style="background: #e8f5e9; border-left-color: #4caf50; margin-top: 15px;">
+                <h3>🔄 Inversión automática para lectura correcta</h3>
+                <p><strong>¡IMPORTANTE!</strong> Este generador invierte automáticamente el texto y los caracteres Braille en espejo.</p>
+                <p><strong>¿Por qué?</strong> Porque presionas desde arriba, los puntos quedan en relieve en la parte de ABAJO del papel.</p>
+                <p><strong>Cómo leer:</strong> Después de imprimir, DA VUELTA el papel y léelo por el lado opuesto donde presionaste.</p>
+                <p><strong>Ejemplo:</strong> Si escribes "HOLA", la impresora marca "ALOH" invertido. Al dar vuelta el papel, se lee correctamente "HOLA" en Braille.</p>
             </div>
 
             <div class="info-box" style="background: #fff3cd; border-left-color: #ffc107; margin-top: 15px;">
-                <h3>💡 Tips para FlashForge</h3>
-                <p><strong>Área de trabajo:</strong> Máximo ~130x130mm útil (deja margen de 10mm por lado)</p>
-                <p><strong>Velocidades recomendadas:</strong> 1500-2500 mm/min para mejor precisión</p>
+                <h3>💡 Tips específicos para Finder</h3>
+                <p><strong>Área de trabajo:</strong> Máximo ~100x100mm útil (márgenes de 20mm configurados)</p>
+                <p><strong>Velocidades recomendadas:</strong> 2000-3000 mm/min para movimientos XY | 600 mm/min para Z</p>
                 <p><strong>Solenoide ideal:</strong> Push-pull 12V, 5-10mm de recorrido, fuerza 2-5N</p>
-                <p><strong>Aguja:</strong> Diámetro 1.5-2mm, punta roma (no afilada)</p>
-                <p><strong>Soporte de montaje:</strong> Diseña un adaptador que se monte en lugar del extrusor</p>
+                <p><strong>Aguja:</strong> Diámetro 1.5-2mm, punta roma (no afilada) | Longitud ~30-40mm</p>
+                <p><strong>Soporte de montaje:</strong> Diseña un adaptador que se monte donde va el extrusor</p>
+                <p><strong>Papel:</strong> Cartulina 180-220g da mejores resultados. Fíjala con cinta en los bordes.</p>
             </div>
         </div>
     </div>
@@ -422,6 +432,22 @@
             document.getElementById('estimatedTime').textContent = estimatedTime;
         }
 
+        // Función para invertir horizontalmente los puntos Braille (espejo)
+        function mirrorBrailleDots(dots) {
+            // Braille original:  Espejo horizontal:
+            // 1 4    =>    4 1
+            // 2 5    =>    5 2  
+            // 3 6    =>    6 3
+            return [
+                dots[3], // punto 4 va a posición 1
+                dots[4], // punto 5 va a posición 2
+                dots[5], // punto 6 va a posición 3
+                dots[0], // punto 1 va a posición 4
+                dots[1], // punto 2 va a posición 5
+                dots[2]  // punto 3 va a posición 6
+            ];
+        }
+
         function generateGcode() {
             const text = document.getElementById('inputText').value.toLowerCase();
             const dotSpacing = parseFloat(document.getElementById('dotSpacing').value) || 2.5;
@@ -432,8 +458,8 @@
             const punchDepth = parseFloat(document.getElementById('punchDepth').value) || 0.5;
             const restHeight = parseFloat(document.getElementById('restHeight').value) || 2;
             const punchDuration = parseInt(document.getElementById('punchDuration').value) || 100;
-            const offsetX = parseFloat(document.getElementById('offsetX').value) || 10;
-            const offsetY = parseFloat(document.getElementById('offsetY').value) || 10;
+            const offsetX = parseFloat(document.getElementById('offsetX').value) || 20;
+            const offsetY = parseFloat(document.getElementById('offsetY').value) || 20;
             const solenoidPower = parseInt(document.getElementById('solenoidPower').value) || 255;
 
             let gcode = '; ========================================\n';
@@ -472,10 +498,14 @@
             
             for (let line of lines) {
                 gcode += `; Línea ${lineNum + 1}\n`;
+                
+                // INVERTIR la línea para lectura correcta del Braille
+                const reversedLine = line.split('').reverse().join('');
+                
                 x = offsetX; // Reiniciar X al margen inicial de cada línea
                 
-                for (let i = 0; i < line.length; i++) {
-                    const char = line[i];
+                for (let i = 0; i < reversedLine.length; i++) {
+                    const char = reversedLine[i];
                     
                     if (char === ' ') {
                         x += wordSpacing;
@@ -488,7 +518,10 @@
                     const dots = brailleDots[brailleChar];
                     if (!dots) continue;
                     
-                    gcode += `; Carácter: '${char}' (${brailleChar})\n`;
+                    // INVERTIR los puntos horizontalmente para lectura correcta
+                    const mirroredDots = mirrorBrailleDots(dots);
+                    
+                    gcode += `; Carácter: '${char}' (${brailleChar}) [ESPEJO]\n`;
                     
                     // Matriz de puntos Braille (2 columnas x 3 filas)
                     // Punto 1,4 (columna 0)  Punto 2,5 (columna 1)  Punto 3,6 (columna 2)
@@ -501,20 +534,26 @@
                         [dotSpacing, dotSpacing*2] // Punto 6
                     ];
                     
+                    // Bajar Z a altura de trabajo una sola vez por carácter
+                    gcode += `G1 Z${punchDepth} F600 ; Bajar a altura de trabajo\n`;
+                    
                     // Punzar cada punto activo
                     for (let j = 0; j < 6; j++) {
-                        if (dots[j] === 1) {
+                        if (mirroredDots[j] === 1) {
                             const px = x + dotPositions[j][0];
                             const py = y + dotPositions[j][1];
                             
                             gcode += `G1 X${px.toFixed(2)} Y${py.toFixed(2)} F${feedRate} ; Posición punto ${j+1}\n`;
-                            gcode += `G1 Z${punchDepth} F${Math.round(feedRate/3)} ; Bajar Z (punzar)\n`;
-                            gcode += `M106 S${solenoidPower} ; SOLENOIDE ON\n`;
+                            gcode += `G1 Z${punchDepth} F600 ; Bajar Z (punzar)\n`;
+                            gcode += `M106 S${solenoidPower} ; PRESIONAR\n`;
                             gcode += `G4 P${punchDuration} ; Mantener ${punchDuration}ms\n`;
-                            gcode += `M107 ; SOLENOIDE OFF\n`;
+                            gcode += `M107 ; Soltar\n`;
                             gcode += `G1 Z${restHeight} F${feedRate} ; Subir Z\n`;
                         }
                     }
+                    
+                    // Subir Z después de terminar el carácter
+                    gcode += `G1 Z${restHeight} F${feedRate} ; Subir Z\n`;
                     
                     x += charSpacing;
                 }
