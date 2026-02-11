@@ -268,12 +268,12 @@
                         <input type="number" id="punchDuration" value="100" step="10" min="50">
                     </div>
                     <div class="setting-item">
-                        <label>Offset inicial X (mm)</label>
-                        <input type="number" id="offsetX" value="20" step="1" min="10" max="50">
+                        <label>Margen X desde home (mm)</label>
+                        <input type="number" id="offsetX" value="5" step="1" min="0" max="50">
                     </div>
                     <div class="setting-item">
-                        <label>Offset inicial Y (mm)</label>
-                        <input type="number" id="offsetY" value="20" step="1" min="10" max="50">
+                        <label>Margen Y desde home (mm)</label>
+                        <input type="number" id="offsetY" value="5" step="1" min="0" max="50">
                     </div>
                     <div class="setting-item">
                         <label>Potencia solenoide (0-255)</label>
@@ -335,7 +335,7 @@
                 <p>1. Coloca cartulina 200g sobre la cama (NO uses vidrio, usa la superficie directa)</p>
                 <p>2. Escribe solo "a" para prueba inicial</p>
                 <p>3. Ajusta "Altura Z punzar" desde 0.5mm hasta que la aguja marque sin perforar</p>
-                <p>4. Márgenes configurados en 20mm (área segura de ~100x100mm)</p>
+                <p>4. La escritura parte siempre desde el home + margen configurado (por defecto 5mm)</p>
                 <p><strong>📄 Cargar G-code:</strong> Guarda en USB (.gcode), insértalo en la Finder y selecciona desde pantalla táctil.</p>
             </div>
 
@@ -484,14 +484,21 @@
             gcode += 'G1 Z10 F600 ; Subir Z 10mm\n';
             gcode += 'G92 E0 ; Reset extrusor\n\n';
             
-            gcode += '; === POSICIÓN INICIAL ===\n';
-            gcode += `G1 X${offsetX} Y${offsetY} F2000 ; Ir a inicio\n`;
+            // Calcular el ancho total del texto para posicionar desde home
+            // El texto se invierte, así que calculamos cuánto espacio ocupa
+            // para que la escritura empiece cerca del home (0,0) + margen
+            const startX = offsetX;  // Margen desde home en X
+            const startY = offsetY;  // Margen desde home en Y
+
+            gcode += '; === POSICIÓN INICIAL (desde HOME) ===\n';
+            gcode += `; Inicio de escritura en X=${startX} Y=${startY} (cerca del home)\n`;
+            gcode += `G1 X${startX} Y${startY} F2000 ; Ir a inicio (cerca de home)\n`;
             gcode += `G1 Z${restHeight} F600 ; Z a altura de reposo\n`;
             gcode += 'G4 P500 ; Pausa estabilización\n\n';
             gcode += '; === INICIO BRAILLE ===\n\n';
 
-            let x = offsetX;
-            let y = offsetY;
+            let x = startX;
+            let y = startY;
             let lineNum = 0;
 
             const lines = text.split('\n');
@@ -502,7 +509,7 @@
                 // INVERTIR la línea para lectura correcta del Braille
                 const reversedLine = line.split('').reverse().join('');
                 
-                x = offsetX; // Reiniciar X al margen inicial de cada línea
+                x = startX; // Reiniciar X al margen inicial de cada línea
                 
                 for (let i = 0; i < reversedLine.length; i++) {
                     const char = reversedLine[i];
@@ -564,7 +571,7 @@
             gcode += '\n; === FINALIZACIÓN FlashForge ===\n';
             gcode += 'M107 ; Apagar solenoide\n';
             gcode += `G1 Z${restHeight + 10} F600 ; Subir Z seguro\n`;
-            gcode += 'G1 X5 Y5 F2000 ; Posición segura\n';
+            gcode += 'G28 ; Volver a home\n';
             gcode += 'M104 S0 T0 ; Apagar extrusor\n';
             gcode += 'M140 S0 ; Apagar cama\n';
             gcode += 'M84 ; Desactivar motores\n';
@@ -610,7 +617,5 @@
         // Inicializar vista previa
         updatePreview();
     </script>
-</body>
-</html>
 </body>
 </html>
