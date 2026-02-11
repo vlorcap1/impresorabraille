@@ -534,26 +534,24 @@
                         [dotSpacing, dotSpacing*2] // Punto 6
                     ];
                     
-                    // Bajar Z a altura de trabajo una sola vez por carácter
-                    gcode += `G1 Z${punchDepth} F600 ; Bajar a altura de trabajo\n`;
-                    
                     // Punzar cada punto activo
+                    // Secuencia correcta: 1) Subir Z  2) Mover XY  3) Bajar Z  4) Activar solenoide
                     for (let j = 0; j < 6; j++) {
                         if (mirroredDots[j] === 1) {
                             const px = x + dotPositions[j][0];
                             const py = y + dotPositions[j][1];
                             
-                            gcode += `G1 X${px.toFixed(2)} Y${py.toFixed(2)} F${feedRate} ; Posición punto ${j+1}\n`;
-                            gcode += `G1 Z${punchDepth} F600 ; Bajar Z (punzar)\n`;
-                            gcode += `M106 S${solenoidPower} ; PRESIONAR\n`;
+                            gcode += `G1 Z${restHeight} F600 ; 1. Subir Z (seguro para trasladar)\n`;
+                            gcode += `G1 X${px.toFixed(2)} Y${py.toFixed(2)} F${feedRate} ; 2. Mover XY a punto ${j+1}\n`;
+                            gcode += `G1 Z${punchDepth} F600 ; 3. Bajar Z (punzar)\n`;
+                            gcode += `M106 S${solenoidPower} ; 4. PRESIONAR solenoide\n`;
                             gcode += `G4 P${punchDuration} ; Mantener ${punchDuration}ms\n`;
-                            gcode += `M107 ; Soltar\n`;
-                            gcode += `G1 Z${restHeight} F${feedRate} ; Subir Z\n`;
+                            gcode += `M107 ; Soltar solenoide\n`;
                         }
                     }
                     
                     // Subir Z después de terminar el carácter
-                    gcode += `G1 Z${restHeight} F${feedRate} ; Subir Z\n`;
+                    gcode += `G1 Z${restHeight} F600 ; Subir Z fin de carácter\n`;
                     
                     x += charSpacing;
                 }
@@ -612,5 +610,7 @@
         // Inicializar vista previa
         updatePreview();
     </script>
+</body>
+</html>
 </body>
 </html>
